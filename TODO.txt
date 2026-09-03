@@ -1,9 +1,9 @@
 Core and data structures
-    - create board structure
-    - create a function for generating all possible tiles
-    - create init function to initialize an empty board
-    - create getcell and setcell functions
-    - test to verify functionality
+    x- create board structure
+    x- create a function for generating all possible tiles
+    x- create init function to initialize an empty board
+    x- create getcell and setcell functions
+    x- test to verify functionality
 
 Logic
     - create a getneighbours function
