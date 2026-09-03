@@ -6,10 +6,10 @@ Core and data structures
     x- test to verify functionality
 
 Logic
-    - create a getneighbours function
-    - create a checkwincondition function
-    - create a checkdrawcondition function (no empty tiles)
-    - test to verify functionality
+    x- create a getneighbours function
+    x- create a checkwincondition function
+    x- create a checkdrawcondition function (no empty tiles)
+    x- test to verify functionality
 
 IO and game loop
     - create a readplayermove function
