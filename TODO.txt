@@ -1,0 +1,26 @@
+Core and data structures
+    - create board structure
+    - create a function for generating all possible tiles
+    - create init function to initialize an empty board
+    - create getcell and setcell functions
+    - test to verify functionality
+
+Logic
+    - create a getneighbours function
+    - create a checkwincondition function
+    - create a checkdrawcondition function (no empty tiles)
+    - test to verify functionality
+
+IO and game loop
+    - create a readplayermove function
+    - create a drawboard function
+    - create a gameloop function 
+
+AI
+    - create a generatemoves function (limit to adjecent tiles)
+    - create an evaluateboard function (reward longer chains)
+    - create a minimax function with alpha beta pruning
+
+Polish
+    - change init funciton to spawn some obstacles
+    - change drawboard to allow for the obstacles
