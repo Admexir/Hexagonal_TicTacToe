@@ -36,6 +36,10 @@ direction(-1, 0).
 direction(0, -1).
 direction(-1, 1).
 
+% to prevent empty spaces from winning
+player(ai).
+player(player).
+
 % returns a list of all valid (Q, R) coordinates adjacent to the given cell
 get_neighbours(Board, Q, R, Neighbours) :-
     findall(
@@ -50,6 +54,9 @@ get_neighbours(Board, Q, R, Neighbours) :-
 
 % checks whether a player has fulfilled a win condition (5 tiles in a row)
 check_win(board(Radius, Assoc), Player) :-
+    % the player has to be a player-state (not empty or obstacles)
+    player(Player),
+    
     % go through all tiles belonging to the player
     gen_assoc(c(Q, R), Assoc, Player),
     
