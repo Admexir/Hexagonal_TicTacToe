@@ -22,7 +22,8 @@ Winner = player
 :- module(logic, [
     check_win/2,        % check_win(+Board, ?Player)
     check_draw/1,       % check_draw(+Board)
-    get_neighbours/4    % get_neighbours(+Board, +Q, +R, -Neighbours)
+    get_neighbours/4,   % get_neighbours(+Board, +Q, +R, -Neighbours)
+    direction/2         % direction(?Dir1, ?Dir2)
 ]).
 
 :- use_module(board).

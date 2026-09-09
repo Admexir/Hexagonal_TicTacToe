@@ -1,12 +1,14 @@
-% test: consult('C:/Users/ajaza/source/repos/_Neprocko/Project/Board.pl').
-% use_module(board).
-% init_board(1, [(0,1)], B),
-%    get_cell(B, 0, 0, State00),
-%    get_cell(B, 0, 1, State01),
-%    set_cell(B, 0, 0, player, B_New),
-%    get_cell(B_New, 0, 0, State00_New),
-%    is_valid_coord(B, -1, 1),
+/* test:
+consult('C:/Users/ajaza/source/repos/_Neprocko/Project/Board.pl').
+use_module(board).
+init_board(1, [(0,1)], B),
+   get_cell(B, 0, 0, State00),
+   get_cell(B, 0, 1, State01),
+   set_cell(B, 0, 0, player, B_New),
+   get_cell(B_New, 0, 0, State00_New),
+   is_valid_coord(B, -1, 1),
 %    \+ is_valid_coord(B, 2, 0).
+*/
 
 % expected:
 % B = board(1, t(c(-1, 0), empty, -, t(c(-1, 1), empty, -, ...
