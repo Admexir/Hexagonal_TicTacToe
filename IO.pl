@@ -26,6 +26,7 @@ B0 = board(2, t(c(0, -2), ...
 :- module(io, [
     print_board/1,      % print_board(+Board)
     read_player_move/3, % read_player_move(+Board, -Q, -R)
+    read_int_value/2,   % read_int_value(+Message, -Value)
     print_message/1     % print_message(+Msg)
 ]).
 
@@ -79,6 +80,21 @@ read_player_move(Board, Q, R) :-
             ->  Q = TQ, R = TR, ! %if
             ;   print_message('Invalid move (out of bounds, taken, or obstacle), try again...'),  %else
                 fail
+    ).
+
+% reads the user input at the start of the app to positive integer values
+read_int_value(Message, Value) :-
+    repeat,
+    write(Message),
+    flush_output,
+    read_line_to_string(user_input, String),
+    (   
+        number_string(ParsedVal, String),
+        integer(ParsedVal),
+        ParsedVal > 0
+        ->  Value = ParsedVal, ! %if
+        ;   print_message('Invalid input, must be a positive integer, try again...'),  %else
+            fail
     ).
 
 % extracts the coordinates from a string

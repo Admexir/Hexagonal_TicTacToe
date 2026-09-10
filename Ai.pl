@@ -67,13 +67,18 @@ BestMove = (0, 0).
 */
 
 :- module(ai, [
-    get_best_move/5,    % get_best_move(+Board, +Player, +Depth, -BestQ, -BestR)
-    generate_moves/3,   % generate_moves(+Board, +OccupiedTiles, -Moves)
-    evaluate_board/2    % evaluate_board(+Board, -Score)
+get_best_move/5,    % get_best_move(+Board, +Player, +Depth, -BestQ, -BestR)
+generate_moves/3,   % generate_moves(+Board, +OccupiedTiles, -Moves)
+evaluate_board/2    % evaluate_board(+Board, -Score)
 ]).
 
 :- use_module(logic).
 :- use_module(board).
+
+% main predicate to get ai move - uses minimax to generate the best move
+%get_best_move(+Board, +Player, +Depth, -BestQ, -BestR) :-
+get_best_move(Board, Player, Depth, BestQ, BestR) :-
+    ai:minimax(Board, Depth, -10000000, 10000000, ai, _, (BestQ, BestR)).
 
 % helpers to separate maximizing and minimizing player
 wanted_points_multiplier(player, -1).
@@ -162,7 +167,7 @@ process_moves([(Q, R)|RestMoves], Board, Depth, Alpha, Beta, Player, NextPlayer,
     % check if we prune the branch -------------------------------------
     (   
         NewAlpha >= NewBeta % pruning condition: alpha >= beta
-    ->  % prune
+        ->  % prune
         FinalBest = NewBest,
         FinalMove = NewMove
         ;   % continue checking other nodes (on the same depth)
@@ -170,8 +175,6 @@ process_moves([(Q, R)|RestMoves], Board, Depth, Alpha, Beta, Player, NextPlayer,
     ).
 
 
-% uses minimax to generate the best move
-get_best_move(+Board, +Player, +Depth, -BestQ, -BestR).
     
 
 % generates all possible moves of placing a move adjecent to another already taken tile
