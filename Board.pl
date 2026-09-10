@@ -24,7 +24,7 @@ init_board(1, [(0,1)], B),
     set_cell/5,         % set_cell(+Board, +Q, +R, +State, -NewBoard)
     empty_cells/2       % empty_cells(+Board, -ListOfEmptyCoords)
 ]).
-use_module(library(assoc)).
+:- use_module(library(assoc)).
 
 % The board is represented as: board(Radius, AssocCells)
 % AssocCells maps c(Q, R) -> State

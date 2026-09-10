@@ -12,12 +12,12 @@ Logic
     x- test to verify functionality
 
 IO and game loop
-    - create a readplayermove function
-    - create a drawboard function
-    - create a gameloop function 
+    x- create a readplayermove function
+    x- create a drawboard function
+    x- create a gameloop function 
 
 AI
-    - create a generatemoves function (limit to adjecent tiles)
+    x- create a generatemoves function (limit to adjecent tiles)
     - create an evaluateboard function (reward longer chains)
     - create a minimax function with alpha beta pruning
 

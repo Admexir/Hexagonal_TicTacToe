@@ -1,8 +1,5 @@
 /* test: 
 consult('C:/Users/ajaza/source/repos/_Neprocko/Project/Ai.pl').
-use_module(logic).
-use_module(board).
-use_module(ai).
 
 test 1 - find_owned_tiles:
 init_board(2, [], B0),
@@ -20,10 +17,11 @@ ai:generate_moves(B, [(0,0)], Moves).
 test 3 - evaluate_board:
 board:init_board(2, [], B0),
 board:set_cell(B0, -1, 0, ai, B1),
+ai:evaluate_board(B1, Score1),
 board:set_cell(B1,  0, 0, ai, B2),
+ai:evaluate_board(B2, Score2),
 board:set_cell(B2,  1, 0, ai, FinalBoard),
-ai:find_owned_tiles(FinalBoard, ai, OwnedTiles),
-ai:evaluate_board(FinalBoard, OwnedTiles, Score).
+ai:evaluate_board(FinalBoard, Score3).
 
 test 4 - minimax spots a win condition:
 board:init_board(2, [], B0),
@@ -31,6 +29,13 @@ board:set_cell(B0, -2, 0, ai, B1),
 board:set_cell(B1, -1, 0, ai, B2),
 board:set_cell(B2,  0, 0, ai, B3),
 board:set_cell(B3,  1, 0, ai, FinalBoard),
+ai:minimax(FinalBoard, 1, -10000000, 10000000, ai, BestEval, BestMove).
+
+variation 2:
+board:init_board(2, [], B0),
+board:set_cell(B0, -2, 0, ai, B1),
+board:set_cell(B1, -1, 0, ai, B2),
+board:set_cell(B2,  1, 0, ai, FinalBoard),
 ai:minimax(FinalBoard, 1, -10000000, 10000000, ai, BestEval, BestMove).
 
 */
@@ -47,23 +52,28 @@ Moves = [(-1, 0), (-1, 1), (0, -1), (1, -1), (1, 0)].
 
 test 3:
 B0 = ..., B1 = ..., B2 = ..., FinalBoard = ..., OwnedTiles = [(-1, 0), (0, 0), (1, 0)],
-Score = 564.
+Score1 = 6. Score2 = 74. Score3 = 564.
 
 test 4:
 B0 = ..., B1 = ..., B2 = ..., B3 = ..., FinalBoard = ...,
-BestEval = 3125,
+BestEval = 1000000,
 BestMove = (2, 0).
+
+variation 2:
+B0 = ..., B1 = ..., B2 = ..., FinalBoard = ...,
+BestEval = 2616,
+BestMove = (0, 0).
 
 */
 
 :- module(ai, [
     get_best_move/5,    % get_best_move(+Board, +Player, +Depth, -BestQ, -BestR)
-    generate_moves/3,   % generate_moves(+Board, +OwnedTiles, -Moves)
-    evaluate_board/3    % evaluate_board(+Board, +Player, -Score)
+    generate_moves/3,   % generate_moves(+Board, +OccupiedTiles, -Moves)
+    evaluate_board/2    % evaluate_board(+Board, -Score)
 ]).
 
-use_module(logic).
-use_module(board).
+:- use_module(logic).
+:- use_module(board).
 
 % helpers to separate maximizing and minimizing player
 wanted_points_multiplier(player, -1).
@@ -109,25 +119,26 @@ minimax(Board, _, _, _, _, 0, null) :-
     logic:check_draw(Board), !.
 
 % reached max depth -> evaluate board
-minimax(Board, 0, _, _, Player, Eval, null) :-
+minimax(Board, 0, _, _, _, Eval, null) :-
     !,
-    find_owned_tiles(Board, Player, OwnedTiles),
-    evaluate_board(Board, OwnedTiles, RawScore),
-    wanted_points_multiplier(Player, Mult),
-    Eval is RawScore * Mult.
-    % evaluate_board(Board, Eval).
+    % find_owned_tiles(Board, Player, OwnedTiles),
+    evaluate_board(Board, Eval).
+    % wanted_points_multiplier(Player, Mult),
+    % Eval is RawScore * Mult.
 
 % intermediate node -> continue searching deeper
 minimax(Board, Depth, Alpha, Beta, Player, BestEval, BestMove) :-
+    next_player(Player, NextPlayer),
     find_owned_tiles(Board, Player, OwnedTiles),
-    generate_moves(Board, OwnedTiles, Moves),
+    find_owned_tiles(Board, NextPlayer, OtherPlayerTiles),
+    append(OwnedTiles, OtherPlayerTiles, OccupiedTiles),
+    generate_moves(Board, OccupiedTiles, Moves),
     
     % get if the current player is maximizing or minimizing + initialize node value
     % wanted_points_multiplier(Player, Mult),
     init_max(Player, InitMinimum),
     is_maximizing(Player, IsMaximizing),
     
-    next_player(Player, NextPlayer),
 
     % process all the generated moves (which calls minimax again after evaluating pruning/alpha beta logic)
     % process_moves(+Moves, +Board, +Depth, +Alpha, +Beta, +Player, +NextPlayer, +IsMaximizing, +CurrentBest, +CurrentMove, -BestEval, -BestMove)
@@ -154,31 +165,14 @@ process_moves([(Q, R)|RestMoves], Board, Depth, Alpha, Beta, Player, NextPlayer,
     ->  % prune
         FinalBest = NewBest,
         FinalMove = NewMove
-    ;   % continue checking other nodes (on the same depth)
+        ;   % continue checking other nodes (on the same depth)
         process_moves(RestMoves, Board, Depth, NewAlpha, NewBeta, Player, NextPlayer, IsMaximizing, NewBest, NewMove, FinalBest, FinalMove)
     ).
 
 
 % uses minimax to generate the best move
 get_best_move(+Board, +Player, +Depth, -BestQ, -BestR).
-
-get_current_move(Board, Player, BestMove) :-
-    find_owned_tiles(Board, Player, OwnedTiles), % could cache it to not recalculate it every round...
-    generate_moves(Board, OwnedTiles, Moves),
-    wanted_points_multiplier(Player, Mult),
-    findall(
-        Val,
-        (
-            member(Move, Moves),
-            evaluate_board(Board, [Move|OwnedTiles], Player, Score),
-            MultScore is Score * Mult,
-            Val = Move/Score
-        ),
-        RatedMoves
-        ).
     
-
-
 
 % generates all possible moves of placing a move adjecent to another already taken tile
 generate_moves(Board, OwnedTiles, Moves) :-
@@ -212,8 +206,16 @@ find_owned_tiles(board(_, Assoc), Player, OwnedTiles) :- % very similar to empty
 
 % evaluates the board using a heuristic - all line lengths ^ 5 
 % => the bot prioritizes longer lines over multiple shorter ones, but more of same length over fewer
-evaluate_board(Board, OwnedTiles, Score) :-
-    % TODO: evaluate enemy tiles too
+evaluate_board(Board, Score) :-
+    find_owned_tiles(Board, ai, AITiles),
+    find_owned_tiles(Board, player, PlayerTiles),
+    score_tiles(AITiles, AIScore),
+    score_tiles(PlayerTiles, PlayerScore),
+    Score is AIScore - PlayerScore.
+
+
+% evaluates the given owned tiles
+score_tiles(OwnedTiles, Score) :-
     findall(
         Length,
         (
@@ -222,9 +224,10 @@ evaluate_board(Board, OwnedTiles, Score) :-
             find_line_length(OwnedTiles, Q, R, DQ, DR, Length)
         ),
         LinesLength
-    ),
+        ),
     maplist(raise_to_fifth_power, LinesLength, PowLengths),
     sum_list(PowLengths, Score).
+
 
 raise_to_fifth_power(In, Out) :- Out is In^5.
 
