@@ -42,7 +42,32 @@ state_char(obstacle, '#').
 % prints out the board visuals
 print_board(board(Radius, Assoc)) :-
     NegRad is -Radius,
-    print_board_helper(board(Radius, Assoc), NegRad).
+
+    write('-'),
+    % top axis indices
+    tab(Radius),
+    write('\\'),
+    forall(
+        between(0, Radius, Q),
+        format('~w\\', [Q])   % 'x '... exactly 2 characters
+    ),
+    write('\n'),
+    
+    print_board_helper(board(Radius, Assoc), NegRad),
+
+    % bottom axis indices
+    write('  '),
+    tab(Radius),
+    write('\\'),
+    forall(
+        between(NegRad, 0, Q),
+        (   
+            Q < 0 
+        ->  format('~w', [Q])  % '-5' ... exactly 2 characters
+        ;   format('\\~w\\', [Q]) % '0 '
+        )
+    ),
+    write('\n').
     
 % recursive print of rows
 print_board_helper(board(Radius, Assoc), Radius) :- print_row(board(Radius, Assoc), Radius),!.
@@ -54,6 +79,11 @@ print_board_helper(board(Radius, Assoc), CRow) :-
 
 % Prints a single row, applying an indent to create the hexagonal shape
 print_row(board(Radius, Assoc), R) :-
+    (   
+        R < 0 
+    ->  format('~w ', [R]) 
+    ;   format(' ~w ', [R]) 
+    ),
     Indent is abs(R),
     tab(Indent),
     MinQ is max(-Radius, -Radius - R),
