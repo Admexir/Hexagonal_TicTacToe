@@ -15,6 +15,8 @@ start :-
     io:read_int_value('Enter AI search depth: ', SearchDepth),
     io:read_int_value('Enter board size radius: ', BoardSize),
     io:read_int_value('Enter board obstacle count: ', ObstacleCount),
+
+    io:print_message('Type moves in the format: Q R or type exit to quit'),
     
     % for now, initialize with 3 diameter (sides 4 characters long) with obstacle in the middle
     % TODO: generate obstacles at random locations

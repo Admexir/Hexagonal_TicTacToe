@@ -74,12 +74,19 @@ read_player_move(Board, Q, R) :-
     flush_output,
     read_line_to_string(user_input, String),
     (   
+        String == "exit"  % Use double quotes for string comparison
+        ->  
+        print_message('Exiting game...'), 
+        halt
+        ;   
         parse_move(String, TQ, TR),
         is_valid_coord(Board, TQ, TR),
         get_cell(Board, TQ, TR, empty)
-            ->  Q = TQ, R = TR, ! %if
-            ;   print_message('Invalid move (out of bounds, taken, or obstacle), try again...'),  %else
-                fail
+        ->  
+        Q = TQ, R = TR, ! 
+        ;   
+        print_message('Invalid move (out of bounds, taken, or obstacle), try again...'),  
+        fail
     ).
 
 % reads the user input at the start of the app to positive integer values
