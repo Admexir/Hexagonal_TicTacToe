@@ -113,17 +113,17 @@ update_alpha_beta(false, Best, Alpha, Beta, Alpha, NewBeta) :-
 % alpha beta minimax
 % minimax(+Board, +Depth, +Alpha, +Beta, +Player, -BestEval, -BestMove)
 
-% reached game end - ai won
-minimax(Board, _, _, _, _, _, _, 1000000, null) :-
-    logic:check_win(Board, ai), !.
+% % reached game end - ai won
+% minimax(Board, _, _, _, _, _, _, 1000000, null) :-
+%     logic:check_win(Board, ai), !.
 
-% reached game end - player won
-minimax(Board, _, _, _, _, _, _, -1000000, null) :-
-    logic:check_win(Board, player), !.
+% % reached game end - player won
+% minimax(Board, _, _, _, _, _, _, -1000000, null) :-
+%     logic:check_win(Board, player), !.
 
-% reached game end - draw
-minimax(Board, _, _, _, _, _, _, 0, null) :-
-    logic:check_draw(Board), !.
+% % reached game end - draw
+% minimax(Board, _, _, _, _, _, _, 0, null) :-
+%     logic:check_draw(Board), !.
 
 % reached max depth -> evaluate board
 minimax(_, 0, _, _, _, AITiles, PlayerTiles, Eval, null) :-
@@ -139,15 +139,19 @@ minimax(Board, Depth, Alpha, Beta, Player, AITiles, PlayerTiles, BestEval, BestM
     append(PlayerTiles, AITiles, OccupiedTiles),
     generate_moves(Board, OccupiedTiles, Moves),
     
-    % get if the current player is maximizing or minimizing + initialize node value
-    % wanted_points_multiplier(Player, Mult),
-    init_max(Player, InitMinimum),
-    is_maximizing(Player, IsMaximizing),
-    
-
-    % process all the generated moves (which calls minimax again after evaluating pruning/alpha beta logic)
-    % process_moves(+Moves, +Board, +Depth, +Alpha, +Beta, +Player, +NextPlayer, +IsMaximizing, +AITiles, +PlayerTiles, +CurrentBest, +CurrentMove, -BestEval, -BestMove)
-    process_moves(Moves, Board, Depth, Alpha, Beta, Player, NextPlayer, IsMaximizing, AITiles, PlayerTiles, InitMinimum, null, BestEval, BestMove).
+    ( % check draw (no moves available -> draw)
+        Moves == [] 
+        -> BestEval = 0, BestMove = null
+        ;
+        % get if the current player is maximizing or minimizing + initialize node value
+        % wanted_points_multiplier(Player, Mult),
+        init_max(Player, InitMinimum),
+        is_maximizing(Player, IsMaximizing),
+        
+        % process all the generated moves (which calls minimax again after evaluating pruning/alpha beta logic)
+        % process_moves(+Moves, +Board, +Depth, +Alpha, +Beta, +Player, +NextPlayer, +IsMaximizing, +AITiles, +PlayerTiles, +CurrentBest, +CurrentMove, -BestEval, -BestMove)
+        process_moves(Moves, Board, Depth, Alpha, Beta, Player, NextPlayer, IsMaximizing, AITiles, PlayerTiles, InitMinimum, null, BestEval, BestMove)
+    ).
 
 
 % processes all the given moves (calls deeper minimax after evaluating pruning conditions, updates alpha/beta,...)
@@ -157,16 +161,24 @@ minimax(Board, Depth, Alpha, Beta, Player, AITiles, PlayerTiles, BestEval, BestM
 process_moves([], _, _, _, _, _, _, _, _, _, FinalBest, FinalMove, FinalBest, FinalMove).
 % recursive case -> process a single move
 process_moves([(Q, R)|RestMoves], Board, Depth, Alpha, Beta, Player, NextPlayer, IsMaximizing, AITiles, PlayerTiles, CurrentBest, CurrentMove, FinalBest, FinalMove) :-
-    % execute the move (on a "local board") and evaluate it
-    board:set_cell(Board, Q, R, Player, NextBoard),
-    NextDepth is Depth - 1,
     % add the move to the owned tiles
     (   
         Player == ai
-    ->  NewAITiles = [(Q, R)|AITiles], NewPlayerTiles = PlayerTiles
-    ;   NewPlayerTiles = [(Q, R)|PlayerTiles], NewAITiles = AITiles
+        ->  NewAITiles = [(Q, R)|AITiles], NewPlayerTiles = PlayerTiles, CheckTiles = NewAITiles
+        ;   NewPlayerTiles = [(Q, R)|PlayerTiles], NewAITiles = AITiles, CheckTiles = NewPlayerTiles
     ),
-    minimax(NextBoard, NextDepth, Alpha, Beta, NextPlayer, NewAITiles, NewPlayerTiles, Eval, _),
+
+    % check whether the move is winning    
+    (   
+        fast_check_win(Q, R, CheckTiles) 
+    ->  ( Player == ai -> Eval = 1000000 ; Eval = -1000000 )
+    ;   % not a win, execute move and search deeper
+        % execute the move (on a "local board") and evaluate it
+        board:set_cell(Board, Q, R, Player, NextBoard),
+        NextDepth is Depth - 1,
+
+        minimax(NextBoard, NextDepth, Alpha, Beta, NextPlayer, NewAITiles, NewPlayerTiles, Eval, _)
+    ),
     % we got evaluation of the move -> update best move + alpha/beta values if needed
     update_best(IsMaximizing, Eval, (Q, R), CurrentBest, CurrentMove, NewBest, NewMove),
     update_alpha_beta(IsMaximizing, NewBest, Alpha, Beta, NewAlpha, NewBeta),
@@ -177,7 +189,7 @@ process_moves([(Q, R)|RestMoves], Board, Depth, Alpha, Beta, Player, NextPlayer,
         FinalBest = NewBest,
         FinalMove = NewMove
         ;   % continue checking other nodes (on the same depth)
-        process_moves(RestMoves, Board, Depth, NewAlpha, NewBeta, Player, NextPlayer, IsMaximizing, NewAITiles, NewPlayerTiles, NewBest, NewMove, FinalBest, FinalMove)
+        process_moves(RestMoves, Board, Depth, NewAlpha, NewBeta, Player, NextPlayer, IsMaximizing, AITiles, PlayerTiles, NewBest, NewMove, FinalBest, FinalMove)
     ).
 
 
@@ -228,11 +240,17 @@ score_tiles(OwnedTiles, Score) :-
         Length,
         (
             member((Q, R), OwnedTiles),
-            logic:direction(DQ, DR),
+            % use the 3 axes as directions
+            member((DQ, DR), [(1, 0), (0, 1), (1, -1)]),
+            % count it only if it's a start of the line
+            PrevQ is Q - DQ,
+            PrevR is R - DR,
+            \+ member((PrevQ, PrevR), OwnedTiles),
+            % find the full length starting from this tile
             find_line_length(OwnedTiles, Q, R, DQ, DR, Length)
         ),
         LinesLength
-        ),
+    ),
     maplist(raise_to_fifth_power, LinesLength, PowLengths),
     sum_list(PowLengths, Score).
 
@@ -245,10 +263,19 @@ raise_to_fifth_power(In, Out) :- Out is In^5.
 % find_line_length(+OwnedTiles, +Q, +R, +DQ, +DR, -Length)
 
 % line search reached the end of a line
-find_line_length(OwnedTiles, Q, R, _, _, 0) :- \+ member((Q, R), OwnedTiles).
+find_line_length(OwnedTiles, Q, R, _, _, 0) :- \+ member((Q, R), OwnedTiles),!.
 find_line_length(OwnedTiles, Q, R, DQ, DR, Count) :-
-    member((Q, R), OwnedTiles),
     NextQ is Q + DQ,
     NextR is R + DR,
     find_line_length(OwnedTiles, NextQ, NextR, DQ, DR, NextCount),
     Count is NextCount + 1.
+
+% fast_check_win(+Q, +R, +Tiles)
+% checks whether the player has won by checking the 3 axial directions from the newly placed tile
+fast_check_win(Q, R, Tiles) :-
+    member((DQ, DR), [(1, 0), (0, 1), (1, -1)]),
+    find_line_length(Tiles, Q, R, DQ, DR, CountPlus),
+    NDQ is -DQ, NDR is -DR,
+    find_line_length(Tiles, Q, R, NDQ, NDR, CountMinus),
+    Total is CountPlus + CountMinus - 1,
+    Total >= 5, !.
