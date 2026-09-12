@@ -143,6 +143,9 @@ minimax(Board, Depth, Alpha, Beta, Player, AITiles, PlayerTiles, BestEval, BestM
         Moves == [] 
         -> BestEval = 0, BestMove = null
         ;
+        % order moves with a simple heuristic to (hopefully) improve alpha-beta prune chances
+        order_moves_heuristic(Moves, AITiles, PlayerTiles, OrderedMoves),
+
         % get if the current player is maximizing or minimizing + initialize node value
         % wanted_points_multiplier(Player, Mult),
         init_max(Player, InitMinimum),
@@ -150,7 +153,7 @@ minimax(Board, Depth, Alpha, Beta, Player, AITiles, PlayerTiles, BestEval, BestM
         
         % process all the generated moves (which calls minimax again after evaluating pruning/alpha beta logic)
         % process_moves(+Moves, +Board, +Depth, +Alpha, +Beta, +Player, +NextPlayer, +IsMaximizing, +AITiles, +PlayerTiles, +CurrentBest, +CurrentMove, -BestEval, -BestMove)
-        process_moves(Moves, Board, Depth, Alpha, Beta, Player, NextPlayer, IsMaximizing, AITiles, PlayerTiles, InitMinimum, null, BestEval, BestMove)
+        process_moves(OrderedMoves, Board, Depth, Alpha, Beta, Player, NextPlayer, IsMaximizing, AITiles, PlayerTiles, InitMinimum, null, BestEval, BestMove)
     ).
 
 
@@ -279,3 +282,61 @@ fast_check_win(Q, R, Tiles) :-
     find_line_length(Tiles, Q, R, NDQ, NDR, CountMinus),
     Total is CountPlus + CountMinus - 1,
     Total >= 5, !.
+
+
+
+% MOVE ORDERING FOR ALPHA-BETA
+
+% orders the move list by a longest-line-length heuristic
+% order_moves_heuristic(+Moves, +AITiles, +PlayerTiles, -OrderedMoves)
+order_moves_heuristic(Moves, AITiles, PlayerTiles, OrderedMoves) :-
+    findall(
+        NegScore-Move, % allows using keysort(+<Key-value pairs>, -SortedMoves)
+        (
+            member(Move, Moves),
+            score_move_heuristic(Move, AITiles, PlayerTiles, Score),
+            NegScore is -Score % keysort orders lowest to highest -> inverse scores
+        ),
+        ScoredMoves
+    ),
+    keysort(ScoredMoves, SortedMoves), % sort by keys (scores)
+    extract_moves(SortedMoves, OrderedMoves). % strips away the scores
+
+% strips away the scores from key-value pairs
+% extract_moves(+KeyValueList, -ValueList)
+extract_moves([], []).
+extract_moves([_-Move|Rest], [Move|OrderedRest]) :-
+    extract_moves(Rest, OrderedRest).
+
+% scores a single move with a longest-line-length heuristic
+% score_move_heuristic(+Move, +AITiles, +PlayerTiles, -Score)
+score_move_heuristic((Q, R), AITiles, PlayerTiles, Score) :-
+    line_length_heuristic(Q, R, AITiles, ScoreAI),
+    line_length_heuristic(Q, R, PlayerTiles, ScorePlayer),
+    % A good move extends our lines OR blocks their lines, so we just add them
+    Score is ScoreAI + ScorePlayer. 
+
+% check all axes from the placed tiles to see how long lines it'll create
+% line_length_heuristic(+Q, +R, +OwnedTiles, -Score)
+line_length_heuristic(Q, R, OwnedTiles, Score) :-
+    findall(
+        Length,
+        (
+            member((DQ, DR), [(1, 0), (0, 1), (1, -1)]), % directions
+            
+            PQ is Q + DQ, PR is R + DR,
+            find_line_length(OwnedTiles, PQ, PR, DQ, DR, CPlus),
+            NQ is Q - DQ, NR is R - DR,
+            NDQ is -DQ, NDR is -DR,
+            find_line_length(OwnedTiles, NQ, NR, NDQ, NDR, CMinus),
+            
+            % total length = line up to here + 1
+            Length is CPlus + CMinus + 1
+        ),
+        Lengths
+    ),
+    % prioritize longer lines (but not TOO strongly ... not raise_to_fifth_power :) )
+    maplist(raise_to_second_power, Lengths, PowLengths),
+    sum_list(PowLengths, Score).
+
+raise_to_second_power(In, Out) :- Out is In^2.

@@ -43,9 +43,9 @@ state_char(obstacle, '#').
 print_board(board(Radius, Assoc)) :-
     NegRad is -Radius,
 
-    write('-'),
+    write('R\\Q'),
     % top axis indices
-    tab(Radius),
+    RadM2 is Radius -2, tab(RadM2),
     write('\\'),
     forall(
         between(0, Radius, Q),
@@ -56,8 +56,8 @@ print_board(board(Radius, Assoc)) :-
     print_board_helper(board(Radius, Assoc), NegRad),
 
     % bottom axis indices
-    write('  '),
-    tab(Radius),
+    write('R\\Q '),
+    tab(RadM2),
     write('\\'),
     forall(
         between(NegRad, 0, Q),
@@ -77,8 +77,9 @@ print_board_helper(board(Radius, Assoc), CRow) :-
     print_row(board(Radius, Assoc), CRow),
     print_board_helper(board(Radius, Assoc), NRow).
 
-% Prints a single row, applying an indent to create the hexagonal shape
+% prints a single row, indenting to create the hexagonal shape
 print_row(board(Radius, Assoc), R) :-
+    % row numbering
     (   
         R < 0 
     ->  format('~w ', [R]) 
@@ -104,7 +105,7 @@ read_player_move(Board, Q, R) :-
     flush_output,
     read_line_to_string(user_input, String),
     (   
-        String == "exit"  % Use double quotes for string comparison
+        String == "exit"
         ->  
         print_message('Exiting game...'), 
         halt
