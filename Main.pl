@@ -10,7 +10,7 @@ start.
 :- use_module(library(random)). % for obstacle placement
 
 start :-
-    io:print_message('----- Hexagonalni piskvorky -----'),
+    io:print_message('----- Hexagonal Tic Tac Toe -----'),
     % init query (search depth, grid size)
     % run init
     io:read_int_value('Enter AI search depth: ', SearchDepth),

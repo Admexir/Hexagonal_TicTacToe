@@ -18,9 +18,9 @@ IO and game loop
 
 AI
     x- create a generatemoves function (limit to adjecent tiles)
-    - create an evaluateboard function (reward longer chains)
-    - create a minimax function with alpha beta pruning
+    x- create an evaluateboard function (reward longer chains)
+    x- create a minimax function with alpha beta pruning
 
 Polish
-    - change init funciton to spawn some obstacles
-    - change drawboard to allow for the obstacles
+    x- change init funciton to spawn some obstacles
+    x- change drawboard to allow for the obstacles
