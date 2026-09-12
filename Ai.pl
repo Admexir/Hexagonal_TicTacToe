@@ -1,68 +1,84 @@
 /* test: 
 consult('C:/Users/ajaza/source/repos/_Neprocko/Project/Ai.pl').
 
-test 1 - find_owned_tiles:
-init_board(2, [], B0),
-set_cell(B0, 0, 0, ai, B1),
-set_cell(B1, 1, 0, ai, B2),
-set_cell(B2, -1, 1, player, FinalBoard),
+Tests:
+
+Test 1 - find_owned_tiles:
+board:init_board(2, [], B0),
+board:set_cell(B0, 0, 0, ai, B1),
+board:set_cell(B1, 1, 0, ai, B2),
+board:set_cell(B2, -1, 1, player, FinalBoard),
 ai:find_owned_tiles(FinalBoard, ai, RawAITiles),
 sort(RawAITiles, AITiles),
 ai:find_owned_tiles(FinalBoard, player, PlayerTiles).
 
-test 2 - generate_moves:
-board:init_board(1, [(0,1)], B),
+Test 2 - generate_moves:
+board:init_board(2, [], B),
 ai:generate_moves(B, [(0,0)], Moves).
 
-test 3 - evaluate_board:
-board:init_board(2, [], B0),
-board:set_cell(B0, -1, 0, ai, B1),
-ai:evaluate_board(B1, Score1),
-board:set_cell(B1,  0, 0, ai, B2),
-ai:evaluate_board(B2, Score2),
-board:set_cell(B2,  1, 0, ai, FinalBoard),
-ai:evaluate_board(FinalBoard, Score3).
+Test 3 - find_line_length:
+ai:find_line_length([(0,0), (1,0), (2,0), (0,1)], 0, 0, 1, 0, Length).
 
-test 4 - minimax spots a win condition:
+Test 4 - evaluate_board:
+ai:evaluate_board([(0,0), (1,0)], [], ScoreAI),
+ai:evaluate_board([(0,0), (1,0)], [(-1,1), (-2,2)], ScoreDiff).
+
+Test 5 - fast_check_win:
+ai:fast_check_win(0, 0, [(0,0), (1,0), (-1,0), (2,0), (-2,0)]), % Should succeed
+\+ ai:fast_check_win(0, 0, [(0,0), (1,0), (-1,0), (2,0)]).      % Should fail -> succeed with \+
+
+Test 6 - order_moves_heuristic:
+ai:order_moves_heuristic([(1,0), (0,1)], [(2,0)], [], OrderedMoves).
+
+Test 7 - get_best_move spots a win condition:
 board:init_board(2, [], B0),
 board:set_cell(B0, -2, 0, ai, B1),
 board:set_cell(B1, -1, 0, ai, B2),
 board:set_cell(B2,  0, 0, ai, B3),
 board:set_cell(B3,  1, 0, ai, FinalBoard),
-ai:minimax(FinalBoard, 1, -10000000, 10000000, ai, BestEval, BestMove).
+ai:get_best_move(FinalBoard, ai, 1, BestQ, BestR).
 
-variation 2:
+Test 8 - get_best_move blocks a player win:
 board:init_board(2, [], B0),
-board:set_cell(B0, -2, 0, ai, B1),
-board:set_cell(B1, -1, 0, ai, B2),
-board:set_cell(B2,  1, 0, ai, FinalBoard),
-ai:minimax(FinalBoard, 1, -10000000, 10000000, ai, BestEval, BestMove).
+board:set_cell(B0, -2, 0, player, B1),
+board:set_cell(B1, -1, 0, player, B2),
+board:set_cell(B2,  0, 0, player, B3),
+board:set_cell(B3,  1, 0, player, FinalBoard),
+ai:get_best_move(FinalBoard, ai, 2, BestQ, BestR).
 
-*/
+Expected:
 
-/* expected:
-test 1:
+Test 1 - find_owned_tiles:
 B0 = ..., B1 = ..., B2 = ..., FinalBoard = ...
 AITiles = [(0, 0), (1, 0)],
 PlayerTiles = [(-1, 1)].
 
-test 2: 
-B = board(...
-Moves = [(-1, 0), (-1, 1), (0, -1), (1, -1), (1, 0)].
+Test 2 - generate_moves:
+B = board(...)
+Moves = [(-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0)].
 
-test 3:
-B0 = ..., B1 = ..., B2 = ..., FinalBoard = ..., OwnedTiles = [(-1, 0), (0, 0), (1, 0)],
-Score1 = 6. Score2 = 74. Score3 = 564.
+Test 3 - find_line_length:
+Length = 3.
 
-test 4:
+Test 4 - evaluate_board:
+ScoreAI = 36,
+ScoreDiff = 0.
+
+Test 5 - fast_check_win:
+true.
+
+Test 6 - order_moves_heuristic:
+OrderedMoves = [(1, 0), (0, 1)].
+
+Test 7 - get_best_move spots a win condition:
 B0 = ..., B1 = ..., B2 = ..., B3 = ..., FinalBoard = ...,
-BestEval = 1000000,
-BestMove = (2, 0).
+BestQ = 2,
+BestR = 0.
 
-variation 2:
-B0 = ..., B1 = ..., B2 = ..., FinalBoard = ...,
-BestEval = 2616,
-BestMove = (0, 0).
+Test 8 - get_best_move blocks a player win:
+B0 = ..., B1 = ..., B2 = ..., B3 = ..., FinalBoard = ...,
+BestQ = 2,
+BestR = 0.
 
 */
 
